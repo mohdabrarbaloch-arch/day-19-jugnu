@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Jugnu — ask, and see where the answer came from</title>
+<meta name="description" content="A conversational search engine that answers with citations you can actually check." />
+<meta name="theme-color" content="#0b0d12" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/" aria-label="Jugnu home">
+      <span class="brand-mark" aria-hidden="true">✦</span>
+      <span class="brand-name">Jugnu</span>
+    </a>
+
+    <nav class="topnav" aria-label="Main">
+      <button class="navlink" id="btn-history" type="button">History</button>
+      <button class="navlink" id="btn-auth" type="button">Sign in</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO / ASK ============ -->
+  <section class="hero" id="hero">
+    <div class="hero-inner">
+      <h1 class="hero-title">Ask anything.<br /><span class="hero-accent">See the receipts.</span></h1>
+      <p class="hero-sub">
+        Jugnu reads real pages, then answers in plain language — with a numbered
+        citation on every sentence, so you can check the work yourself.
+      </p>
+
+      <form class="ask" id="ask-form" autocomplete="off">
+        <label class="sr-only" for="question">Your question</label>
+        <div class="ask-box">
+          <textarea
+            id="question"
+            name="question"
+            rows="1"
+            maxlength="500"
+            placeholder="What is retrieval-augmented generation?"
+            aria-describedby="ask-hint"
+          ></textarea>
+          <button class="ask-send" id="ask-send" type="submit" aria-label="Search">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <p class="ask-hint" id="ask-hint">
+          <kbd>Enter</kbd> to ask · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line
+        </p>
+      </form>
+
+      <div class="chips" id="chips" aria-label="Example questions">
+        <button class="chip" type="button">What is a vector database?</button>
+        <button class="chip" type="button">Who was Ada Lovelace?</button>
+        <button class="chip" type="button">How does photosynthesis work?</button>
+        <button class="chip" type="button">What is quantum computing?</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="results" id="results" hidden aria-live="polite">
+
+    <div class="results-head">
+      <h2 class="results-q" id="results-q"></h2>
+      <div class="results-meta" id="results-meta"></div>
+    </div>
+
+    <div class="answer-card" id="answer-card">
+      <div class="answer-label">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="answer-provider">Answer</span>
+      </div>
+      <div class="answer-body" id="answer-body"></div>
+      <div class="answer-actions">
+        <button class="ghost-btn" id="btn-copy" type="button">Copy answer</button>
+        <button class="ghost-btn" id="btn-share" type="button">Share</button>
+      </div>
+    </div>
+
+    <div class="sources" id="sources">
+      <h3 class="sources-title">Sources <span class="sources-count" id="sources-count"></span></h3>
+      <ol class="source-list" id="source-list"></ol>
+    </div>
+
+    <div class="followups" id="followups" hidden>
+      <h3 class="followups-title">Keep digging</h3>
+      <div class="chips" id="followup-chips"></div>
+    </div>
+  </section>
+
+  <!-- ============ LOADING ============ -->
+  <section class="loading" id="loading" hidden aria-live="polite">
+    <div class="loading-inner">
+      <div class="pulse" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p class="loading-text" id="loading-text">Searching the web…</p>
+      <ol class="loading-steps" id="loading-steps">
+        <li data-step="search">Finding sources</li>
+        <li data-step="read">Reading the pages</li>
+        <li data-step="write">Writing the answer</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ EMPTY / ERROR ============ -->
+  <section class="notice" id="notice" hidden>
+    <p class="notice-text" id="notice-text"></p>
+    <button class="ghost-btn" id="notice-retry" type="button" hidden>Try again</button>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="history" id="history" hidden>
+    <div class="history-head">
+      <h2>Your searches</h2>
+      <button class="ghost-btn" id="history-close" type="button">Close</button>
+    </div>
+    <ul class="history-list" id="history-list"></ul>
+    <p class="history-empty" id="history-empty" hidden>
+      Nothing yet. Ask something and it will show up here.
+    </p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>
+    Jugnu answers from live web pages and cites every claim.
+    It can still be wrong — that is what the citations are for.
+  </p>
+</footer>
+
+<!-- ============ AUTH MODAL ============ -->
+<div class="modal" id="auth-modal" hidden role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <button class="modal-close" type="button" data-close aria-label="Close">×</button>
+    <h2 class="modal-title" id="auth-title">Sign in</h2>
+    <p class="modal-sub" id="auth-sub">Save your searches and pick up where you left off.</p>
+
+    <form id="auth-form" autocomplete="on">
+      <div class="field" id="field-name" hidden>
+        <label for="auth-name">Name</label>
+        <input id="auth-name" name="display_name" type="text" maxlength="60" placeholder="Your name" />
+      </div>
+      <div class="field">
+        <label for="auth-email">Email</label>
+        <input id="auth-email" name="email" type="email" required
+               autocomplete="email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label for="auth-password">Password</label>
+        <input id="auth-password" name="password" type="password" required
+               autocomplete="current-password" minlength="8" placeholder="At least 8 characters" />
+      </div>
+      <p class="form-error" id="auth-error" hidden></p>
+      <button class="primary-btn" id="auth-submit" type="submit">Sign in</button>
+    </form>
+
+    <p class="modal-switch">
+      <span id="auth-switch-text">New here?</span>
+      <button class="link-btn" id="auth-switch" type="button">Create an account</button>
+    </p>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
+<script src="/static/app.js" defer></script>
+</body>
+</html>

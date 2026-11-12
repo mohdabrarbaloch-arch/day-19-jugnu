@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jugnu
+      POSTGRES_PASSWORD: jugnu
+      POSTGRES_DB: jugnu
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jugnu -d jugnu"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      # Override this in a real deployment.
+      SECRET_KEY: ${SECRET_KEY:-change-me-before-you-deploy}
+      DATABASE_URL: postgresql+psycopg://jugnu:jugnu@db:5432/jugnu
+      SEARCH_PROVIDERS: ${SEARCH_PROVIDERS:-wikipedia}
+      ANSWER_PROVIDER: ${ANSWER_PROVIDER:-extractive}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      RATE_LIMIT_ENABLED: "true"
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
